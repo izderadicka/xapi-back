@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+import xapi_back.cli as cli
+import sys
+
+if __name__ == "__main__":
+		cli.main(sys.argv[1:])

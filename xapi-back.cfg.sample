@@ -1,0 +1,11 @@
+{
+"servers":[
+{"name":"your server",
+ "url":"https://your_server.example.com",
+ "user":"root",
+ "password":"your_pass"
+}
+],
+"storage_root":"/backup/vms",
+"storage_retain":5
+}
