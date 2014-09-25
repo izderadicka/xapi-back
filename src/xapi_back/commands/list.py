@@ -6,7 +6,7 @@ Created on Sep 19, 2014
 from xapi_back.cli import CommandForEachHost, register
 from tabulate import tabulate
 from xapi_back.util import bool2str
-from xapi_back.common import AUTOBACKUP_KEY, AUTOBACKUP_FREQ_KEY
+from xapi_back.common import AUTOBACKUP_KEY, AUTOBACKUP_BATCH
 from collections import OrderedDict
 from xapi_back.storage import Storage
 
@@ -26,7 +26,7 @@ class ListCommand(CommandForEachHost):
                 self.result[vm_name]=[host['name'],vm_name, 
                     vm['power_state'],
                     bool2str(vm['other_config'].get(AUTOBACKUP_KEY, False)),
-                    vm['other_config'].get(AUTOBACKUP_FREQ_KEY) ]
+                    vm['other_config'].get(AUTOBACKUP_BATCH) ]
                 
     def after(self):
         def fmt_date(dt):
@@ -52,7 +52,7 @@ class ListCommand(CommandForEachHost):
         for vm in stats:
             if not self.result.has_key(vm):
                 tab.append(['', vm, '', '', '', fmt_date(stats[vm]['last_backup']), fmt_dur(stats[vm]['duration'])])
-        print tabulate(tab, ['Host', 'VM', 'State', 'AutoBck', 'AutoBck Freq.', 'Last Backup', 'Dur. (m)'])
+        print tabulate(tab, ['Host', 'VM', 'State', 'AutoBck', 'AutoBck Batch', 'Last Backup', 'Dur. (m)'])
         
                 
 def register_me(commands):

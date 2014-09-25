@@ -9,6 +9,9 @@ import random
 import hashlib
 import struct
 import sys
+from os.path import os
+import errno
+
 
 def bool2str(b):
     if b:
@@ -41,8 +44,40 @@ def gzip_size(filename):
     fo.close()
     return struct.unpack('<I', r)[0]
 
-def extract_uuid(ref):
-    try:
-        return ref.split(':')[1]
-    except IndexError:
-        raise ValueError('Invalid ID: %s' % ref)
+class AlreadyLocked(Exception):
+    def __init__(self, msg):
+        super(AlreadyLocked, self).__init__(msg)
+    pass
+class RuntimeLock(object):
+    def __init__(self, name, fail_msg='Runtime lock exists, cannot continue'):
+        locs=['/run/lock/', '/var/run/lock', '/var/run', '/tmp']
+        loc = None
+        for l in locs:
+            if os.path.isdir(l) and os.access(l, os.R_OK|os.W_OK):
+                loc=l
+                break
+        if not loc:
+            raise Exception('No directory for lock file')
+        self._lock_file= os.path.join(loc, name)
+        self._fp = None
+        self._fail_msg=fail_msg
+        
+        
+    def lock(self):
+        try:
+            self._fp=os.open(self._lock_file, os.O_CREAT|os.O_EXCL|os.O_RDWR)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                raise AlreadyLocked(self._fail_msg)
+            
+    def unlock(self):
+        os.close(self._fp)
+        os.unlink(self._lock_file)
+        
+        
+    def __enter__(self):
+        self.lock()
+        return self
+    
+    def __exit__(self, ex_type, ex_value, frm):
+        self.unlock()

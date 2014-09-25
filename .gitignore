@@ -36,3 +36,5 @@ _$*
 /storage
 
 /xapi-back.cfg
+/build
+/dist

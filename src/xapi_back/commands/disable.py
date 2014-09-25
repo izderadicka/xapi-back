@@ -5,7 +5,7 @@ Created on Sep 20, 2014
 '''
 
 from xapi_back.cli import CommandForOneHost, register, CommandError, log
-from xapi_back.common import AUTOBACKUP_KEY, AUTOBACKUP_FREQ_KEY
+from xapi_back.common import AUTOBACKUP_KEY, AUTOBACKUP_BATCH
 
 
 class DisableCommand(CommandForOneHost): 
@@ -20,7 +20,7 @@ class DisableCommand(CommandForOneHost):
             raise CommandError('Name %s is not unique, please fix'% self.args.vm)
         id=ids[0]  # @ReservedAssignment
         session.xenapi.VM.remove_from_other_config(id, AUTOBACKUP_KEY)
-        session.xenapi.VM.remove_from_other_config(id, AUTOBACKUP_FREQ_KEY)
+        session.xenapi.VM.remove_from_other_config(id, AUTOBACKUP_BATCH)
     
     @classmethod
     def add_params(self, parser):

@@ -194,8 +194,8 @@ def main(sys_args):
         log.debug('Executing command %s', cmd.name)
         cmd.execute()
     except Exception,e:
-        print >> sys.stderr, "Error in command %s" % cmd
-        log.error('Command %s failed with %s', cmd, e)
+        print >> sys.stderr, "Error in command %s: %s" % (cmd.name, str(e))
+        log.error('Command %s failed with %s', cmd.name, e)
         traceback.print_exc()
         sys.exit(3)
     

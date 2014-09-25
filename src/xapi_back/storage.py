@@ -13,31 +13,6 @@ SLOT_EXT='.xva.gz'
 UNFINISHEND_EXT='.new'
 SIZE_EXT='.size'
 
-class Storage(object):
-    def __init__(self, root, max_slots_per_rack=5):
-        self._root=root
-        self._max_slots=max_slots_per_rack
-        
-    def get_rack_for(self, vm_name):
-        return Rack(vm_name, self._root, self._max_slots)
-    
-    def get_status(self):
-        res={}
-        for r in os.listdir(self._root):
-            if os.path.isdir(os.path.join(self._root,r)):
-                rack=self.get_rack_for(r)
-                s=rack.last_slot
-                last_backup=None
-                if s:
-                    last_backup=datetime.datetime.fromtimestamp(s.created) 
-                    duration=s.duration
-                else:
-                    last_backup=None
-                    duration=None
-                res[r]={'last_backup':last_backup, 'duration':duration}
-                
-        return res
-            
 
 class Rack(object):
     def __init__(self, vm_name, root, max_slots):
@@ -47,6 +22,10 @@ class Rack(object):
         self._max_slots=max_slots
         self.clear()
         
+    @staticmethod
+    def exists(vm_name, root):
+        return os.path.exists(os.path.join(root,vm_name))
+    
     def clear(self):
         """ Delete all unfinished backups"""
         for fname in os.listdir(self._path):
@@ -96,6 +75,33 @@ class Rack(object):
             if s.created<= timestamp:
                 return s
         
+class Storage(object):
+    def __init__(self, root, max_slots_per_rack=5):
+        self._root=root
+        self._max_slots=max_slots_per_rack
+        
+    def get_rack_for(self, vm_name, exists=False):
+        if exists and not Rack.exists(vm_name, self._root):
+            return None
+        return Rack(vm_name, self._root, self._max_slots)
+    
+    def get_status(self):
+        res={}
+        for r in os.listdir(self._root):
+            if os.path.isdir(os.path.join(self._root,r)):
+                rack=self.get_rack_for(r)
+                s=rack.last_slot
+                last_backup=None
+                if s:
+                    last_backup=datetime.datetime.fromtimestamp(s.created) 
+                    duration=s.duration
+                else:
+                    last_backup=None
+                    duration=None
+                res[r]={'last_backup':last_backup, 'duration':duration}
+                
+        return res
+            
         
 class WriterProxy(object):
     def __init__(self, f):

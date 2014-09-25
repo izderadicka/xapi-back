@@ -9,7 +9,8 @@ from xapi_back import XenAPI
 log=logging.getLogger()
 
 AUTOBACKUP_KEY='autobackup'
-AUTOBACKUP_FREQ_KEY="autobackup_freq"
+AUTOBACKUP_BATCH="autobackup_set"
+BACKUP_LOCK='xapi_backup.lock'
 
 
 

@@ -7,14 +7,14 @@ Created on Sep 21, 2014
 from xapi_back.cli import CommandForOneHost, register, CommandError, log,\
     ProgressMonitor
 from xapi_back.http import Client
-from xapi_back.util import extract_uuid
 from xapi_back.storage import Storage
-from xapi_back.common import uninstall_VM, cancel_task
+from xapi_back.common import uninstall_VM, cancel_task, BACKUP_LOCK
+from xapi_back.util import RuntimeLock
 
 
 class BackupOne(object):
     
-    def backup(self, session, vm_id, vm_name, host, force_shutdown=False, show_progress=False):
+    def backup(self, session, vm_id, vm_name, host, storage, force_shutdown=False, show_progress=False):
         uuid=session.xenapi.VM.get_uuid(vm_id)  # @ReservedAssignment
         state = session.xenapi.VM.get_power_state(vm_id)
         restore_actions=[]
@@ -37,8 +37,8 @@ class BackupOne(object):
                     restore_actions.append(lambda: session.xenapi.VM.start(vm_id, False, False))
         
             sid=session._session
-            rack=Storage(self.config['storage_root'], self.config.get('storage_retain', 3)).get_rack_for(vm_name)
-            log.info('Starting backup for VM %s (uuid=%s) on server %s', vm_name, id, host['name'])
+            rack=storage.get_rack_for(vm_name)
+            log.info('Starting backup for VM %s (uuid=%s) on server %s', vm_name, uuid, host['name'])
             progress=None
             with Client(host['url']) as c:
                 resp=c.get('/export', {'session_id':sid, 'uuid': uuid})
@@ -64,7 +64,7 @@ class BackupOne(object):
                     a()
             except Exception, e:
                 log.error('Restore action after backup failed, this may leave some temporary snapshots or machine is halted. Error: %s' % e)
-        log.info('Finished backup for VM %s (uuid=%s) on server %s', vm_name, id, host['name']) 
+        log.info('Finished backup for VM %s (uuid=%s) on server %s', vm_name, uuid, host['name']) 
         
 
 
@@ -84,8 +84,9 @@ class BackupOneCommand(CommandForOneHost, BackupOne):
             raise CommandError('Name %s is not unique, please fix'% vm_name)
         
         vm_id=ids[0]
-        
-        self.backup(session, vm_id, vm_name, host, force_shutdown, show_progress)
+        storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3))
+        with RuntimeLock(BACKUP_LOCK,'Another backup is running!'):
+            self.backup(session, vm_id, vm_name, host, storage, force_shutdown, show_progress)
         
         
     
