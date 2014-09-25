@@ -31,11 +31,13 @@ class CustInstall(install):
         install.run(self)
         cfg_dest='/etc/xapi-back.cfg'
         if not os.path.exists('/etc/xapi-back.cfg'):
-            if not self.dry_run:
-                shutil.copy(cfg_file, cfg_dest)
-            print('IMPORTANT: Sample configuration file ws created in %s, you need to edit it before running the tool!' % cfg_dest)
+            try:
+                if not self.dry_run:
+                    shutil.copy(cfg_file, cfg_dest)
+                print('IMPORTANT: Sample configuration file ws created in %s, you need to edit it before running the tool!' % cfg_dest)
             
-        
+            except OSError:
+                pass
     
 
 setup(name='xapi-back',
