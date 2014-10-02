@@ -78,6 +78,8 @@ class Rack(object):
 class Storage(object):
     def __init__(self, root, max_slots_per_rack=5):
         self._root=root
+        if not os.path.isdir(root) or not os.access(root, os.R_OK|os.W_OK):
+            raise Exception('Root storage dir %s does not exist or cannot read and write'%root)
         self._max_slots=max_slots_per_rack
         
     def get_rack_for(self, vm_name, exists=False):
