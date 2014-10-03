@@ -10,6 +10,7 @@ from xapi_back.http import Client
 from xapi_back.storage import Storage
 from xapi_back.common import uninstall_VM, cancel_task, BACKUP_LOCK
 from xapi_back.util import RuntimeLock
+from xapi_back import XenAPI
 
 
 class BackupOne(object):
@@ -27,7 +28,13 @@ class BackupOne(object):
                 log.warn('Backing up machine in suspended stated')
             elif state =='Running':
                 if not force_shutdown:
-                    tt_id=session.xenapi.VM.snapshot(vm_id,'Temp.backup of %s'% vm_name )
+                    try:
+                        tt_id=session.xenapi.VM.snapshot(vm_id,'Temp.backup of %s'% vm_name )
+                    except XenAPI.Failure, f:
+                        if f.details[0]== 'SR_OPERATION_NOT_SUPPORTED':
+                            raise CommandError('Cannot create snapshot of vm %s (try backup in halted state, or detach disks, that do not support snapshots)'% vm_name)
+                        else:
+                            raise
                     uuid=session.xenapi.VM.get_uuid(tt_id)
                     restore_actions.append(lambda: uninstall_VM(session, tt_id))
                     log.debug('Made snapshot of %s to uuid: %s', vm_name, uuid)
