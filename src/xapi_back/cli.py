@@ -17,6 +17,7 @@ from inspect import isclass
 import traceback
 import threading
 log = logging.getLogger()
+import logging.handlers
 
 
 
@@ -169,6 +170,7 @@ def prepare_env(sys_args):
     p.add_argument('-c', '--config', help="Configuration file", default='/etc/xapi-back.cfg')
     p.add_argument('--verbose', action="store_true", help="prints log output to stdout")
     p.add_argument('--debug', action="store_true", help="Logs debug events")
+    p.add_argument('--log', help='Log file (can be also specified in config file')
     cmd_parser=p.add_subparsers(help="Available commands", dest='cmd')
     cmd_classes=load_commands()
     for cc in cmd_classes:
@@ -176,7 +178,7 @@ def prepare_env(sys_args):
     
     args = p.parse_args(sys_args)
     if args.verbose:
-        logging.basicConfig()
+        logging.basicConfig(format='%(levelname)s:%(message)s')
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
     try:
@@ -184,6 +186,12 @@ def prepare_env(sys_args):
     except ConfigError, e:
         print >> sys.stderr, 'Cannot load config file %s : %s' % (args.config, e)
         sys.exit(1)
+    
+    log_file=args.log or cfg.get('log_file') 
+    if log_file:
+        h=logging.handlers.RotatingFileHandler(log_file,maxBytes=1000000,backupCount=3)
+        h.setFormatter(logging.Formatter('%(asctime)s %(levelname)s:%(message)s'))
+        log.addHandler(h)
     
     cmd_class=cmd_classes.get(args.cmd)
     if not cmd_class:

@@ -7,5 +7,6 @@
 }
 ],
 "storage_root":"/backup/vms",
-"storage_retain":5
+"storage_retain":5,
+"log_file":"/var/log/xapi-back/log.txt"
 }
