@@ -17,6 +17,7 @@ from inspect import isclass
 import traceback
 import threading
 log = logging.getLogger()
+log.setLevel(logging.INFO)
 import logging.handlers
 
 

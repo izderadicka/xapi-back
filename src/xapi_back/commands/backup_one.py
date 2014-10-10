@@ -65,6 +65,7 @@ class BackupOne(object):
                 s.close() # close only if finished
             if progress:
                 progress.stop()
+            rack.shrink()
         finally:
             try:
                 for a in reversed(restore_actions):
