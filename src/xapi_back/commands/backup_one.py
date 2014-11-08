@@ -92,7 +92,8 @@ class BackupOneCommand(CommandForOneHost, BackupOne):
             raise CommandError('Name %s is not unique, please fix'% vm_name)
         
         vm_id=ids[0]
-        storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3))
+        storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3),
+                        self.config.get('compress_level', 1))
         with RuntimeLock(BACKUP_LOCK,'Another backup is running!'):
             self.backup(session, vm_id, vm_name, host, storage, force_shutdown, show_progress)
         

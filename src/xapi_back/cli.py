@@ -134,13 +134,13 @@ class ProgressMonitor(threading.Thread):
         
     def run(self):
         while self._running:
-            progress=self._ses.xenapi.task.get_progress(self._task_id) * 100.0
-            sys.stdout.write(self._msg.format(progress=progress))
-            sys.stdout.flush()
             try:
+                progress=self._ses.xenapi.task.get_progress(self._task_id) * 100.0
+                sys.stdout.write(self._msg.format(progress=progress))
+                sys.stdout.flush()
                 self._evt.wait(self._wait)
-            except: # ignore errors of Event
-                pass
+            except Exception, e: # ignore errors in progress monitoring
+                log.debug("Progress thread error: %s", e)
             
     def stop(self):
         self._running=False

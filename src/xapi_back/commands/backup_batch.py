@@ -22,7 +22,8 @@ class BackupBatchCommand(CommandForEachHost, BackupOne):
         all_vms = session.xenapi.VM.get_all_records()
         prog=not self.args.no_progress
         
-        storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3))
+        storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3),
+                        self.config.get('compress_level', 1))
         batch=self.args.batch
         with RuntimeLock(BACKUP_LOCK, 'Another backup is running!'):
             for vm_id in all_vms:

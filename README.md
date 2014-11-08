@@ -35,3 +35,6 @@ pip install git+https://github.com/izderadicka/xapi-back.git#egg=xapi-back
 HISTORY
 -------
 v.0.1 - Initial version
+v.0.2 - Added possibility to set compression level (basically default compression level in python
+				is 9 - highest compression, which is very slow -  it's ~ 6x slower that level 1 for  gain of 
+				just few % space - it does not make sense to use it)

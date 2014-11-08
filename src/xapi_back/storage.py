@@ -15,11 +15,12 @@ SIZE_EXT='.size'
 
 
 class Rack(object):
-    def __init__(self, vm_name, root, max_slots):
+    def __init__(self, vm_name, root, max_slots, compression_level):
         self._path= os.path.join(root,vm_name)
         if not os.path.exists(self._path):
             os.mkdir(self._path)
         self._max_slots=max_slots
+        self._comp_level=compression_level
         self.clear()
         
     @staticmethod
@@ -45,7 +46,7 @@ class Rack(object):
         
     def create_slot(self):
         """Create new slot with current date"""
-        return Slot(self._path)
+        return Slot(self._path, compression_level=self._comp_level)
         
     @property    
     def last_slot(self):
@@ -56,7 +57,7 @@ class Rack(object):
         
     def get_all_slots(self):
         names=filter(lambda n: n.endswith(SLOT_EXT),os.listdir(self._path))
-        slots= [Slot(self._path, n) for n in names]
+        slots= [Slot(self._path, n, compression_level=self._comp_level) for n in names]
         slots.sort(key=lambda i: i.created,reverse=True)
         return slots
         
@@ -76,16 +77,20 @@ class Rack(object):
                 return s
         
 class Storage(object):
-    def __init__(self, root, max_slots_per_rack=5):
+    def __init__(self, root, max_slots_per_rack=5, compression_level=1):
         self._root=root
         if not os.path.isdir(root) or not os.access(root, os.R_OK|os.W_OK):
             raise Exception('Root storage dir %s does not exist or cannot read and write'%root)
         self._max_slots=max_slots_per_rack
+        if not isinstance(compression_level, int) or compression_level < 0 or \
+            compression_level > 9:
+            raise ValueError('Invalid propression level - must be 0 - 9')
+        self._comp_level = compression_level
         
     def get_rack_for(self, vm_name, exists=False):
         if exists and not Rack.exists(vm_name, self._root):
             return None
-        return Rack(vm_name, self._root, self._max_slots)
+        return Rack(vm_name, self._root, self._max_slots, self._comp_level)
     
     def get_status(self):
         res={}
@@ -129,12 +134,13 @@ class WriterProxy(object):
     
         
 class Slot(object):
-    def __init__(self, path, name=None):
+    def __init__(self, path, name=None, compression_level=1):
         if not name:
             h=rand_hash()[:4]
             name=time.strftime('%Y%m%d_%H%M%S_')+h+'_'+SLOT_EXT+UNFINISHEND_EXT
         self._path=os.path.join(path, name)
         self._open_file=None
+        self._comp_level = compression_level
         
     @property    
     def size_uncompressed(self):
@@ -160,7 +166,7 @@ class Slot(object):
         return self._open_file
         
     def get_writer(self):
-        self._open_file= WriterProxy(gzip.open(self._path, 'wb'))
+        self._open_file= WriterProxy(gzip.open(self._path, 'wb', compresslevel=self._comp_level))
         return self._open_file
         
     def close(self):
