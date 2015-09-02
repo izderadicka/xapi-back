@@ -172,6 +172,7 @@ def prepare_env(sys_args):
     p.add_argument('--verbose', action="store_true", help="prints log output to stdout")
     p.add_argument('--debug', action="store_true", help="Logs debug events")
     p.add_argument('--log', help='Log file (can be also specified in config file')
+    p.add_argument('--no-ssl-crt-check', action='store_true', help='Disables server certificate check in https (which is default in latest python)')
     cmd_parser=p.add_subparsers(help="Available commands", dest='cmd')
     cmd_classes=load_commands()
     for cc in cmd_classes:
@@ -182,6 +183,17 @@ def prepare_env(sys_args):
         logging.basicConfig(format='%(levelname)s:%(message)s')
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
+        
+    if args.no_ssl_crt_check:
+        import ssl
+        try:
+            _create_unverified_https_context = ssl._create_unverified_context  # @UndefinedVariable
+        except AttributeError:
+            # Legacy Python that doesn't verify HTTPS certificates by default
+            pass
+        else:
+            # Handle target environment that doesn't support HTTPS verification
+            ssl._create_default_https_context = _create_unverified_https_context
     try:
         cfg = read_config(args.config)
     except ConfigError, e:
