@@ -162,11 +162,11 @@ class Slot(object):
         return os.stat(self._path).st_mtime
     
     def get_reader(self):
-        self._open_file= gzip.open(self._path, 'rb')
+        self._open_file= open(self._path, 'rb')
         return self._open_file
         
     def get_writer(self):
-        self._open_file= WriterProxy(gzip.open(self._path, 'wb', compresslevel=self._comp_level))
+        self._open_file= WriterProxy(open(self._path, 'wb'))
         return self._open_file
         
     def close(self):

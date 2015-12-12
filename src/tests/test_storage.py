@@ -35,7 +35,7 @@ class Test(unittest.TestCase):
         write_test_file(slot)
         res= rack.last_slot
         self.assertEqual(test_file_size, res.size_uncompressed)
-        self.assertTrue(test_file_size < res.size)
+        self.assertTrue(test_file_size == res.size)
         
         sr=Storage(self.dir, 2,compression_level= 1)
         rack=sr.get_rack_for('test')
@@ -43,7 +43,7 @@ class Test(unittest.TestCase):
         write_test_file(slot)
         res= rack.last_slot
         self.assertEqual(test_file_size, res.size_uncompressed)
-        self.assertTrue(test_file_size > res.size)
+        self.assertTrue(test_file_size == res.size)
         comp_size = res.size
         
         sr=Storage(self.dir, 2,compression_level= 9)
@@ -52,7 +52,7 @@ class Test(unittest.TestCase):
         write_test_file(slot)
         res= rack.last_slot
         self.assertEqual(test_file_size, res.size_uncompressed)
-        self.assertTrue(comp_size > res.size)
+        self.assertTrue(comp_size == res.size)
         
         
     def test_basic(self):
