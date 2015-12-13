@@ -57,7 +57,7 @@ class BackupOne(object):
                     progress.start()
                 s=rack.create_slot()
                 writer=s.get_writer()
-                bufsize=1048576
+                bufsize=65536 # 64k is enough - around this size got best performance
                 while True:
                     data=resp.read(bufsize)
                     if not data: break
