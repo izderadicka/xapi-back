@@ -84,7 +84,7 @@ class Storage(object):
         self._max_slots=max_slots_per_rack
         if not isinstance(compression_level, int) or compression_level < 0 or \
             compression_level > 9:
-            raise ValueError('Invalid propression level - must be 0 - 9')
+            raise ValueError('Invalid compression level - must be 0 - 9')
         self._comp_level = compression_level
         
     def get_rack_for(self, vm_name, exists=False):
