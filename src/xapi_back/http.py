@@ -49,9 +49,9 @@ class Client(object):
     
     def _redirect(self, path, resp, redirects=0):
         if redirects>2:
-            raise RedirectError(self.status, self.reason)
+            raise RedirectError(resp.status, resp.reason)
         if resp.status in (301,302,303): # 307, 308 not considered it needs additional approval form user as per HTTP RFC :
-            new_url=resp.get_header('Location')
+            new_url=resp.getheader('Location')
             if not new_url:
                 raise HTTPError('Redirect must contain Location header')
             new_base, new_path=self._abs_url(path, new_url)
