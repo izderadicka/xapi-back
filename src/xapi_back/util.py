@@ -44,6 +44,15 @@ def gzip_size(filename):
     fo.close()
     return struct.unpack('<I', r)[0]
 
+def format_size(x):
+    sfx=['T','G','M','k']
+    s=''
+    while x>= 1024 and sfx:
+        x=x/1024.0
+        s=sfx.pop()
+        
+    return '%0.1f%s'%(x,s) if s else '%0.0f' % x
+
 class AlreadyLocked(Exception):
     def __init__(self, msg):
         super(AlreadyLocked, self).__init__(msg)
