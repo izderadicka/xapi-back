@@ -47,10 +47,9 @@ class RestoreOneCommand(CommandForOneHost):
             if restore:
                 params['restore']=restore
             log.debug('PUT with following params: %s', params)
-            resp=c.put('/import', slot.get_reader(), slot.size_uncompressed, params)
-            new_vm_uuid=''#resp.read()
-            print '%s was restored in VM with uuid %s'%(vm_name, new_vm_uuid)
-            log.info('Finished import of VM %s into uuid %s', vm_name, new_vm_uuid)
+            _resp=c.put('/import', slot.get_reader(), slot.size_uncompressed, params)
+            
+            log.info('Finished import of VM %s', vm_name,)
             
             
                 
