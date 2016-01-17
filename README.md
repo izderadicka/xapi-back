@@ -5,7 +5,7 @@ WARNINGS
 
 1. Provided as is,  don't blame for problems. I tried to make it working reliably, 
 but if you loose backup sorry.   I use it myself for backup of VMs,  but cannot capture all scenarios.
-2. I assuming that all VMs will have **different names**. If not than identical names will be messed 
+2. I assuming that all VMs will have **different names**. If not identical names will be messed 
 together!
 
 USAGE
@@ -37,3 +37,4 @@ v.0.2 - Added possibility to set compression level (basically default compressio
 				just few % space - it does not make sense to use it)
 v.0.3 - Added ssl option to not check server certificates
 v.0.3.1 - HTTP Redirect for VM export - this should enable to backup VMs from pool
+v/0.3.2 - fixed restore to particular SR uuid
