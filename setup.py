@@ -36,7 +36,7 @@ class CustInstall(install):
                     shutil.copy(cfg_file, cfg_dest)
                 print('IMPORTANT: Sample configuration file ws created in %s, you need to edit it before running the tool!' % cfg_dest)
             
-            except OSError:
+            except (OSError, IOError):
                 pass
     
 

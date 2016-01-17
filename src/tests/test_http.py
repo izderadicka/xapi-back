@@ -4,7 +4,7 @@ Created on Sep 21, 2014
 @author: ivan
 '''
 import unittest
-from xapi_back.http import Client, HTTPError
+from xapi_back.http import Client, HTTPError, RedirectError
 import json
 import pprint
 from StringIO import StringIO
@@ -15,6 +15,12 @@ class Test(unittest.TestCase):
 
     def test_get(self):
         with Client('http://httpbin.org/') as c:
+            resp=c.get('/get', {'uuid':'aaaa'})
+            data=json.load(resp)
+            pprint.pprint(data)
+            
+    def test_https(self):
+        with Client('https://httpbin.org/') as c:
             resp=c.get('/get', {'uuid':'aaaa'})
             data=json.load(resp)
             pprint.pprint(data)
@@ -35,6 +41,28 @@ class Test(unittest.TestCase):
             data=json.load(resp)
         pprint.pprint(data)
         print "Response Header:",resp.getheaders()
+        
+    def test_redirect(self):
+        with Client('http://httpbin.org/') as c:
+            resp=c.get('/relative-redirect/1', {'uuid':'aaaa'})
+            data=json.load(resp)
+            self.assertTrue(data)
+            
+        with Client('http://httpbin.org/') as c:
+            resp=c.get('/absolute-redirect/1', {'uuid':'aaaa'})
+            data=json.load(resp)
+            self.assertTrue(data)
+        
+        with Client('http://httpbin.org/') as c:
+            try:
+                resp=c.get('/relative-redirect/4', {'uuid':'aaaa'})
+                self.fail('Should raise http error')
+            except RedirectError:
+                pass
+            
+            
+            
+        
 
         
     

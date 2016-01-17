@@ -8,6 +8,7 @@ from xapi_back.cli import CommandForOneHost, register, CommandError, log,\
     ProgressMonitor
 from xapi_back.http import Client
 from xapi_back.storage import Storage
+from xapi_back import XenAPI
 
 class RestoreOneCommand(CommandForOneHost):
     name="restore"
@@ -18,7 +19,10 @@ class RestoreOneCommand(CommandForOneHost):
         show_progress=not self.args.no_progress
         restore= self.args.restore
         srid = self.args.sr_id
-        
+        try:
+            srid=session.xenapi.SR.get_by_uuid(srid)
+        except XenAPI.Failure, f:
+            raise CommandError('Invalid SR uuid: %s'%f.details[0])
         storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3))
         rack=storage.get_rack_for(vm_name, exists=True)
         if not rack:
@@ -42,10 +46,10 @@ class RestoreOneCommand(CommandForOneHost):
                 params['sr_id']=srid
             if restore:
                 params['restore']=restore
-            resp=c.put('/import', slot.get_reader(), slot.size_uncompressed, params)
-       
+            log.debug('PUT with following params: %s', params)
+            _resp=c.put('/import', slot.get_reader(), slot.size_uncompressed, params)
             
-            log.info('Finished import of VM %s'% vm_name)
+            log.info('Finished import of VM %s', vm_name,)
             
             
                 
