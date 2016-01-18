@@ -36,7 +36,7 @@ class BackupBatchCommand(CommandForEachHost, BackupOne):
                         print "Host %s - VM %s" % (host['name'], vm_name)
                     try:
                         self.backup(session, vm_id, vm_name, host, storage, self.args.shutdown, 
-                                    show_progress=prog, self.config.get('compress') == 'server')
+                                    show_progress=prog, compress_on_server=self.config.get('compress') == 'server')
                     except Exception, e:
                         log.error('Error while backing up VM %s on host %s', vm_name, host['name'])
                     

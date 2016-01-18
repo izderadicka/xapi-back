@@ -33,9 +33,9 @@ class Client(object):
         self._base_url = base_url
         prot,host, _, _, _ =urlparse.urlsplit(base_url)
         if prot=='http':
-            self._conn=httplib.HTTPConnection(host, timeout=10)
+            self._conn=httplib.HTTPConnection(host, timeout=30)
         elif prot == 'https':
-            self._conn=httplib.HTTPSConnection(host, timeout=10)
+            self._conn=httplib.HTTPSConnection(host, timeout=30)
             
     def _reconnect(self, base_url):
         self._conn.close()

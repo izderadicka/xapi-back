@@ -60,7 +60,7 @@ class Rack(object):
     def get_all_slots(self):
         ext=Slot.get_ext_name(self._comp_method)
         names=filter(lambda n: n.endswith(ext),os.listdir(self._path))
-        slots= [Slot(self._path, n, compression_level=self._comp_level) for n in names]
+        slots= [Slot(self._path, n, compression_level=self._comp_level, compression_method=self._comp_method) for n in names]
         slots.sort(key=lambda i: i.created,reverse=True)
         return slots
         

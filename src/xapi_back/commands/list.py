@@ -37,7 +37,7 @@ class ListCommand(CommandForEachHost):
             if not d:
                 return ''
             return '%0.1f' % (d / 60.0)
-        s=Storage(self.config['storage_root'])
+        s=Storage(self.config['storage_root'], compression_method=self.config.get('compress', 'client'))
         stats=s.get_status()
         tab=[]
         for vm in self.result:
