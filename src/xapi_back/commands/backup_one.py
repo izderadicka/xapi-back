@@ -68,6 +68,14 @@ class BackupOne(object):
                     writer.write(data)
                 s.close() # close only if finished
             if progress:
+                progress.join(1)
+                if progress.is_alive():
+                    log.warn('Task did not finished')
+                else:
+                    if progress.error:
+                        msg='Export failed: %s'%progress.result
+                        log.error(msg)
+                        print msg
                 progress.stop()
             rack.shrink()
         finally:

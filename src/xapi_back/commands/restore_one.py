@@ -52,6 +52,20 @@ class RestoreOneCommand(CommandForOneHost):
             _resp=c.put('/import', slot.get_reader(), slot.size_uncompressed, params)
             
             log.info('Finished import of VM %s', vm_name,)
+        if progress:
+            progress.join(1)
+            if progress.is_alive():
+                log.warn('Task did not finished')
+            else:
+                if progress.error:
+                    msg='Import failed: %s'%progress.result
+                    log.error(msg)
+                    print msg
+                else:
+                    msg='VM imported as uuid=%s'%progress.result
+                    log.info(msg)
+                    print msg
+            progress.stop()
             
             
                 

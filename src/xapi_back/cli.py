@@ -131,6 +131,8 @@ class ProgressMonitor(threading.Thread):
         self._msg=message
         self._wait=wait_period
         self.daemon=True
+        self.result=None
+        self.error=False
         
     def run(self):
         while self._running:
@@ -138,6 +140,28 @@ class ProgressMonitor(threading.Thread):
                 progress=self._ses.xenapi.task.get_progress(self._task_id) * 100.0
                 sys.stdout.write(self._msg.format(progress=progress))
                 sys.stdout.flush()
+                status=self._ses.xenapi.task.get_status(self._task_id)
+                if status != 'pending' and status !='cancelling':
+                    if status=='failure':
+                        self.error=True
+                        errors=self._ses.xenapi.task.get_error_info(self._task_id)
+                        log.error('Task has failed: %s', '; '.join(errors))
+                        self.result='; '.join(errors)
+                    elif status=='cancelled':
+                        self.errors=True
+                        msg='Task was canceled'
+                        log.error(msg)
+                        self.result=msg
+                    elif status =='success':
+                        res=self._ses.xenapi.task.get_result(self._task_id)
+                        self.result=res
+                        log.info('Task finished with this result: %s', res)
+                    else:
+                        self.errors=True
+                        msg='Unknown task status: %s' % status
+                        log.error(msg)
+                        self.result=msg
+                    break       
                 self._evt.wait(self._wait)
             except Exception, e: # ignore errors in progress monitoring
                 log.debug("Progress thread error: %s", e)
