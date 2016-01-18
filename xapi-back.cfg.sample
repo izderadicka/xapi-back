@@ -8,6 +8,7 @@
 ],
 "storage_root":"/backup/vms",
 "storage_retain":5,
+"compress":"client",
 "compress_level":1,
 "log_file":"/var/log/xapi-back/log.txt"
 }

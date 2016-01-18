@@ -15,7 +15,8 @@ from xapi_back import XenAPI
 
 class BackupOne(object):
     
-    def backup(self, session, vm_id, vm_name, host, storage, force_shutdown=False, show_progress=False):
+    def backup(self, session, vm_id, vm_name, host, storage, force_shutdown=False, show_progress=False,
+               compress_on_server=False):
         uuid=session.xenapi.VM.get_uuid(vm_id)  # @ReservedAssignment
         state = session.xenapi.VM.get_power_state(vm_id)
         restore_actions=[]
@@ -48,7 +49,10 @@ class BackupOne(object):
             log.info('Starting backup for VM %s (uuid=%s) on server %s', vm_name, uuid, host['name'])
             progress=None
             with Client(host['url']) as c:
-                resp=c.get('/export', {'session_id':sid, 'uuid': uuid})
+                params={'session_id':sid, 'uuid': uuid}
+                if compress_on_server:
+                    params['use_compression']="true"
+                resp=c.get('/export', params)
                 task_id=resp.getheader('task-id')
                 restore_actions.append(lambda: cancel_task(session,task_id))
                 if show_progress:
@@ -93,9 +97,10 @@ class BackupOneCommand(CommandForOneHost, BackupOne):
         
         vm_id=ids[0]
         storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3),
-                        self.config.get('compress_level', 1))
+                        self.config.get('compress_level', 1), self.config.get('compress', 'client'))
         with RuntimeLock(BACKUP_LOCK,'Another backup is running!'):
-            self.backup(session, vm_id, vm_name, host, storage, force_shutdown, show_progress)
+            self.backup(session, vm_id, vm_name, host, storage, force_shutdown, show_progress,
+                        self.config.get('compress') == 'server')
         
         
     

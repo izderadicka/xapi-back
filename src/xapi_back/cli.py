@@ -196,6 +196,8 @@ def prepare_env(sys_args):
             ssl._create_default_https_context = _create_unverified_https_context
     try:
         cfg = read_config(args.config)
+        if not 'compress' in cfg:
+            cfg['compress']='client'
     except ConfigError, e:
         print >> sys.stderr, 'Cannot load config file %s : %s' % (args.config, e)
         sys.exit(1)

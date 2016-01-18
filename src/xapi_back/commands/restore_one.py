@@ -23,7 +23,8 @@ class RestoreOneCommand(CommandForOneHost):
             srid=session.xenapi.SR.get_by_uuid(srid)
         except XenAPI.Failure, f:
             raise CommandError('Invalid SR uuid: %s'%f.details[0])
-        storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3))
+        storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3),
+                        compression_method=self.config.get('compress', 'client'))
         rack=storage.get_rack_for(vm_name, exists=True)
         if not rack:
             raise CommandError('No backup to restore for VM %s' % vm_name)

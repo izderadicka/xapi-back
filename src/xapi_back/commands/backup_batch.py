@@ -23,7 +23,7 @@ class BackupBatchCommand(CommandForEachHost, BackupOne):
         prog=not self.args.no_progress
         
         storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3),
-                        self.config.get('compress_level', 1))
+                        self.config.get('compress_level', 1), self.config.get('compress', 'client'))
         batch=self.args.batch
         with RuntimeLock(BACKUP_LOCK, 'Another backup is running!'):
             for vm_id in all_vms:
@@ -35,7 +35,8 @@ class BackupBatchCommand(CommandForEachHost, BackupOne):
                     if prog:
                         print "Host %s - VM %s" % (host['name'], vm_name)
                     try:
-                        self.backup(session, vm_id, vm_name, host, storage, self.args.shutdown, show_progress=prog)
+                        self.backup(session, vm_id, vm_name, host, storage, self.args.shutdown, 
+                                    show_progress=prog, self.config.get('compress') == 'server')
                     except Exception, e:
                         log.error('Error while backing up VM %s on host %s', vm_name, host['name'])
                     

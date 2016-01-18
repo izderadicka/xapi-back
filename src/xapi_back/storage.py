@@ -9,18 +9,20 @@ import time
 from xapi_back.util import rand_hash
 import gzip
 
-SLOT_EXT='.xva.gz'
+BASE_SLOT_EXT='.xva'
+SLOT_EXT=BASE_SLOT_EXT+'.gz'
 UNFINISHEND_EXT='.new'
 SIZE_EXT='.size'
 
 
 class Rack(object):
-    def __init__(self, vm_name, root, max_slots, compression_level):
+    def __init__(self, vm_name, root, max_slots, compression_level, compression_method='client'):
         self._path= os.path.join(root,vm_name)
         if not os.path.exists(self._path):
             os.mkdir(self._path)
         self._max_slots=max_slots
         self._comp_level=compression_level
+        self._comp_method=compression_method
         self.clear()
         
     @staticmethod
@@ -46,7 +48,7 @@ class Rack(object):
         
     def create_slot(self):
         """Create new slot with current date"""
-        return Slot(self._path, compression_level=self._comp_level)
+        return Slot(self._path, compression_level=self._comp_level, compression_method=self._comp_method)
         
     @property    
     def last_slot(self):
@@ -56,7 +58,8 @@ class Rack(object):
             return slots[0]
         
     def get_all_slots(self):
-        names=filter(lambda n: n.endswith(SLOT_EXT),os.listdir(self._path))
+        ext=Slot.get_ext_name(self._comp_method)
+        names=filter(lambda n: n.endswith(ext),os.listdir(self._path))
         slots= [Slot(self._path, n, compression_level=self._comp_level) for n in names]
         slots.sort(key=lambda i: i.created,reverse=True)
         return slots
@@ -77,7 +80,7 @@ class Rack(object):
                 return s
         
 class Storage(object):
-    def __init__(self, root, max_slots_per_rack=5, compression_level=1):
+    def __init__(self, root, max_slots_per_rack=5, compression_level=1, compression_method='client'):
         self._root=root
         if not os.path.isdir(root) or not os.access(root, os.R_OK|os.W_OK):
             raise Exception('Root storage dir %s does not exist or cannot read and write'%root)
@@ -86,11 +89,12 @@ class Storage(object):
             compression_level > 9:
             raise ValueError('Invalid compression level - must be 0 - 9')
         self._comp_level = compression_level
+        self._comp_method = compression_method
         
     def get_rack_for(self, vm_name, exists=False):
         if exists and not Rack.exists(vm_name, self._root):
             return None
-        return Rack(vm_name, self._root, self._max_slots, self._comp_level)
+        return Rack(vm_name, self._root, self._max_slots, self._comp_level, compression_method=self._comp_method)
     
     def get_status(self):
         res={}
@@ -134,13 +138,19 @@ class WriterProxy(object):
     
         
 class Slot(object):
-    def __init__(self, path, name=None, compression_level=1):
+    def __init__(self, path, name=None, compression_level=1, compression_method='client'):
         if not name:
             h=rand_hash()[:4]
-            name=time.strftime('%Y%m%d_%H%M%S_')+h+'_'+SLOT_EXT+UNFINISHEND_EXT
+            ext= Slot.get_ext_name(compression_method)
+            name=time.strftime('%Y%m%d_%H%M%S_')+h+'_'+ext+UNFINISHEND_EXT
         self._path=os.path.join(path, name)
         self._open_file=None
         self._comp_level = compression_level
+        self._comp_method = compression_method
+        
+    @staticmethod
+    def get_ext_name(compression_method):
+        return BASE_SLOT_EXT if compression_method is None or compression_method =='none' else SLOT_EXT
         
     @property    
     def size_uncompressed(self):
@@ -162,11 +172,19 @@ class Slot(object):
         return os.stat(self._path).st_mtime
     
     def get_reader(self):
-        self._open_file= open(self._path, 'rb')
+        
+        if self._comp_method == 'client':
+            self._open_file= gzip.open(self._path, 'rb')
+        else:
+            self._open_file= open(self._path, 'rb')
         return self._open_file
         
     def get_writer(self):
-        self._open_file= WriterProxy(open(self._path, 'wb'))
+        if self._comp_method == 'client':
+            self._open_file= WriterProxy(gzip.open(self._path, 'wb', compresslevel=self._comp_level))
+        else:
+            self._open_file= WriterProxy(open(self._path, 'wb'))
+       
         return self._open_file
         
     def close(self):
