@@ -122,7 +122,7 @@ class CommandForOneHost(Command):
 
 
 class ProgressMonitor(threading.Thread):  
-    def __init__(self, session, task_id, message="Progress {progress:0.2f}%\r", wait_period=5):  
+    def __init__(self, session, task_id, message="Progress {progress:0.2f}%\r", wait_period=1):  
         super(ProgressMonitor, self).__init__(name="Progress monitor")
         self._evt=threading.Event()
         self._running=True
@@ -161,14 +161,25 @@ class ProgressMonitor(threading.Thread):
                         msg='Unknown task status: %s' % status
                         log.error(msg)
                         self.result=msg
-                    break       
+                    break    
+                self._evt.clear()   
                 self._evt.wait(self._wait)
+            except XenAPI.Failure,f:
+                code=f.details[0]
+                if code in ['HANDLE_INVALID']:
+                    break
+                else:
+                    log.debug("Progress thread error: %s", f)
             except Exception, e: # ignore errors in progress monitoring
                 log.debug("Progress thread error: %s", e)
             
     def stop(self):
         self._running=False
         self._evt.set()
+        
+    def join(self, timeout=None):
+        self._evt.set()
+        threading.Thread.join(self, timeout=timeout)
             
         
         

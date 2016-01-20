@@ -9,6 +9,8 @@ from xapi_back.cli import CommandForOneHost, register, CommandError, log,\
 from xapi_back.http import Client
 from xapi_back.storage import Storage
 from xapi_back import XenAPI
+import re
+import sys
 
 class RestoreOneCommand(CommandForOneHost):
     name="restore"
@@ -53,18 +55,27 @@ class RestoreOneCommand(CommandForOneHost):
             
             log.info('Finished import of VM %s', vm_name,)
         if progress:
-            progress.join(1)
+            progress.join(30)
             if progress.is_alive():
                 log.warn('Task did not finished')
             else:
                 if progress.error:
                     msg='Import failed: %s'%progress.result
                     log.error(msg)
-                    print msg
+                    print >>sys.stderr, msg
                 else:
-                    msg='VM imported as uuid=%s'%progress.result
-                    log.info(msg)
-                    print msg
+                    res=progress.result
+                    m=re.search(r'<value>(OpaqueRef:[^<]+)</value>', res)
+                    if m:
+                        try:
+                            vm_uuid=session.xenapi.VM.get_uuid(m.group(1))
+                            msg='VM imported as uuid=%s'%vm_uuid
+                            log.info(msg)
+                            print msg
+                        except XenAPI.Failure, f:
+                            log.error('Cannot get imported VM uuid, error: %s'%f.details[0])
+                    else:
+                        log.warn('Import result does not contain VM id')
             progress.stop()
             
             

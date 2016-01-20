@@ -30,8 +30,10 @@ def uninstall_VM(session, vm_id):
 def cancel_task(session,task_ref):
     try:
         log.debug('Canceling task %s', task_ref)
-        session.xenapi.task.cancel(task_ref)
-    except XenAPI.Failure, f:
+        status=session.xenapi.task.get_status(task_ref)
+        if status=='pending':
+            session.xenapi.task.cancel(task_ref)
+    except Exception, f:
         log.debug('Cannot cancel task: %s'% f)
         
     

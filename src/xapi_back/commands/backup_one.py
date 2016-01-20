@@ -11,6 +11,8 @@ from xapi_back.storage import Storage
 from xapi_back.common import uninstall_VM, cancel_task, BACKUP_LOCK
 from xapi_back.util import RuntimeLock
 from xapi_back import XenAPI
+import traceback
+import sys
 
 
 class BackupOne(object):
@@ -68,14 +70,14 @@ class BackupOne(object):
                     writer.write(data)
                 s.close() # close only if finished
             if progress:
-                progress.join(1)
+                progress.join(10)
                 if progress.is_alive():
                     log.warn('Task did not finished')
                 else:
                     if progress.error:
                         msg='Export failed: %s'%progress.result
                         log.error(msg)
-                        print msg
+                        print >>sys.stderr, msg
                 progress.stop()
             rack.shrink()
         finally:
@@ -83,7 +85,8 @@ class BackupOne(object):
                 for a in reversed(restore_actions):
                     a()
             except Exception, e:
-                log.error('Restore action after backup failed, this may leave some temporary snapshots or machine is halted. Error: %s' % e)
+                traceback.print_exc()
+                log.error('Restore action %s after backup failed, this may leave some temporary snapshots or machine is halted. Error: %s %s', str(a), type(e), str(e))
         log.info('Finished backup for VM %s (uuid=%s) on server %s', vm_name, uuid, host['name']) 
         
 
