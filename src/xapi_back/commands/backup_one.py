@@ -44,7 +44,10 @@ class BackupOne(object):
                 else:
                     log.debug('Shutting down VM')
                     session.xenapi.VM.clean_shutdown(vm_id)
-                    restore_actions.append(lambda: session.xenapi.VM.start(vm_id, False, False))
+                    def restart_vm():
+                        session.xenapi.VM.start(vm_id, False, False)
+                        log.debug('Started VM')
+                    restore_actions.append(restart_vm)
         
             sid=session._session
             rack=storage.get_rack_for(vm_name)
