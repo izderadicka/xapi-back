@@ -14,7 +14,7 @@ from xapi_back import XenAPI
 import traceback
 import sys
 
-
+SNAPSHOT_PREFIX='Temp.backup of '
 class BackupOne(object):
     
     def backup(self, session, vm_id, vm_name, host, storage, force_shutdown=False, show_progress=False,
@@ -32,7 +32,7 @@ class BackupOne(object):
             elif state =='Running':
                 if not force_shutdown:
                     try:
-                        tt_id=session.xenapi.VM.snapshot(vm_id,'Temp.backup of %s'% vm_name )
+                        tt_id=session.xenapi.VM.snapshot(vm_id,SNAPSHOT_PREFIX+ vm_name )
                     except XenAPI.Failure, f:
                         if f.details[0]== 'SR_OPERATION_NOT_SUPPORTED':
                             raise CommandError('Cannot create snapshot of vm %s (try backup in halted state, or detach disks, that do not support snapshots)'% vm_name)

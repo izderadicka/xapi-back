@@ -9,6 +9,7 @@ from xapi_back.cli import CommandForOneHost, register, CommandError, log,\
 from xapi_back.http import Client
 from xapi_back.storage import Storage
 from xapi_back import XenAPI
+from backup_one import SNAPSHOT_PREFIX
 import re
 import sys
 
@@ -67,13 +68,29 @@ class RestoreOneCommand(CommandForOneHost):
                     res=progress.result
                     m=re.search(r'<value>(OpaqueRef:[^<]+)</value>', res)
                     if m:
+                        vm_id=m.group(1)
                         try:
-                            vm_uuid=session.xenapi.VM.get_uuid(m.group(1))
+                            
+                            vm_uuid=session.xenapi.VM.get_uuid(vm_id)
                             msg='VM imported as uuid=%s'%vm_uuid
                             log.info(msg)
                             print msg
                         except XenAPI.Failure, f:
                             log.error('Cannot get imported VM uuid, error: %s'%f.details[0])
+                        if self.args.as_vm:
+                            try:
+                                vm=session.xenapi.VM.get_record(vm_id)
+                                if vm['is_a_template']:
+                                    name=vm['name_label'].replace(SNAPSHOT_PREFIX, '')
+                                    session.xenapi.VM.set_is_a_template(vm_id, False)
+                                    if name:
+                                        session.xenapi.VM.set_name_label(vm_id, name)
+                                    log.info('Template restored as VM %s', name)
+                                else:
+                                    log.warn('VM is not a template')
+                            except XenAPI.Failure,f:
+                                log.error('Cannot change template to VM')
+                                    
                     else:
                         log.warn('Import result does not contain VM id')
             progress.stop()
@@ -89,6 +106,7 @@ class RestoreOneCommand(CommandForOneHost):
         parser.add_argument('--no-progress', action='store_true', help="Do not print progress")
         parser.add_argument('--restore', action='store_true', help="Restore as replacement of original VM (MAC is same)")
         parser.add_argument('--sr_id', help="uuid of SR to import to (if other then default SR)")
+        parser.add_argument('--as-vm', action='store_true', help='In case of snapshot (backup of running VM) restores as VM with same name (not as a template)')
         
 def register_me(commands):
     register(commands, RestoreOneCommand)
