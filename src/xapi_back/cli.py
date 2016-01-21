@@ -30,8 +30,18 @@ class CommandError(Exception):
     def __init__(self, msg="Command Error"):
         super(CommandError, self).__init__(msg)      
 
-
+DEFAULT_CONFIG_FILES=[os.path.expanduser('~/.xapi-back.cfg'), '/etc/xapi-back.cfg']
 def read_config(config_file):
+    if not config_file:
+        for f in DEFAULT_CONFIG_FILES:
+            if os.access(f, os.R_OK):
+                config_file=f
+                break
+    if not config_file:
+        msg='Config file is missing - either supply it via -c parameter or create one at default location %s'%DEFAULT_CONFIG_FILES
+        log.error('msg')
+        print >>sys.stderr, msg
+        sys.exit(4)
     try:
         cfg = json.load(open(config_file))
         return cfg
@@ -203,7 +213,7 @@ def load_commands():
                 
 def prepare_env(sys_args):
     p = argparse.ArgumentParser(version=__version__)
-    p.add_argument('-c', '--config', help="Configuration file", default='/etc/xapi-back.cfg')
+    p.add_argument('-c', '--config', help="Configuration file")
     p.add_argument('--verbose', action="store_true", help="prints log output to stdout")
     p.add_argument('--debug', action="store_true", help="Logs debug events")
     p.add_argument('--log', help='Log file (can be also specified in config file')

@@ -13,8 +13,9 @@ USAGE
 
 Usage is pretty straightforward:
 * command name is xb -  xb -h gives overall help,  xb command -h gives help for given command
-* update /etc/xapi-back.cfg   with details about hosts connections (sorry but password is in 
-cleartext for now) and root of your backup directory
+* update config file (~/.xapi-back.cfg or /etc/xapi-back.cfg)  with details about hosts connections (sorry but passwords are in 
+cleartext for now - so for security reason it's better have config file in your home directory with 0600 access) and root of your 
+backup directory
 * xb list -  test that you connect to hosts and see VMs list
 * go to [xapi-back homepage](http://zderadicka.eu/projects/python/xapi-back-simple-xen-backup-tool/) for more details  
 

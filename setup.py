@@ -29,8 +29,11 @@ version= m.group(1)
 class CustInstall(install):
     def run(self):
         install.run(self)
-        cfg_dest='/etc/xapi-back.cfg'
-        if not os.path.exists('/etc/xapi-back.cfg'):
+        if os.geteuid()==0:
+            cfg_dest='/etc/xapi-back.cfg'
+        else:
+            cfg_dest=os.path.expanduser('~/.xapi-back.cfg')
+        if not os.path.exists(cfg_dest):
             try:
                 if not self.dry_run:
                     shutil.copy(cfg_file, cfg_dest)
@@ -41,8 +44,8 @@ class CustInstall(install):
     
 
 setup(name='xapi-back',
-      version='version',
-      description='Sample package',
+      version=version,
+      description='XenServer backup tool',
       package_dir={'':'src'},
       packages=['xapi_back', 'xapi_back.commands'],
       scripts=['src/xb'],
@@ -51,5 +54,15 @@ setup(name='xapi-back',
       requires= ['tabulate (>=0.7.3)',],
       install_requires=['tabulate>=0.7.3',],
       provides=['xapi_back'],
-      cmdclass={'install': CustInstall}
+      cmdclass={'install': CustInstall},
+      keywords=['Xen', 'Hypervisor', 'backup'],
+      classifiers=['Development Status :: 4 - Beta',
+                   'Environment :: Console',
+                   'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+                   'Natural Language :: English',
+                   'Operating System :: POSIX',
+                   'Programming Language :: Python :: 2.7',
+                   'Topic :: Communications :: Email',
+                   'Topic :: System :: Recovery Tools']
+      
       )
