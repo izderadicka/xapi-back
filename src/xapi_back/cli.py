@@ -150,12 +150,12 @@ class ProgressMonitor(threading.Thread):
                     elif status=='cancelled':
                         self.errors=True
                         msg='Task was canceled'
-                        log.error(msg)
+                        log.warn(msg)
                         self.result=msg
                     elif status =='success':
                         res=self._ses.xenapi.task.get_result(self._task_id)
                         self.result=res
-                        log.info('Task finished with this result: %s', res)
+                        log.debug('Task finished with this result: %s', res)
                     else:
                         self.errors=True
                         msg='Unknown task status: %s' % status
