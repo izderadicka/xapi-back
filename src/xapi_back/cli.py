@@ -227,7 +227,7 @@ def prepare_env(sys_args):
     if args.verbose:
         logging.basicConfig(format='%(levelname)s:%(message)s')
     if args.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG)
         
     if args.no_ssl_crt_check:
         import ssl
@@ -252,6 +252,8 @@ def prepare_env(sys_args):
         h=logging.handlers.RotatingFileHandler(log_file,maxBytes=1000000,backupCount=3)
         h.setFormatter(logging.Formatter('%(asctime)s %(levelname)s:%(message)s'))
         log.addHandler(h)
+    else:
+        log.addHandler(logging.NullHandler())
     
     cmd_class=cmd_classes.get(args.cmd)
     if not cmd_class:

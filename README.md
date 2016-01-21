@@ -16,7 +16,8 @@ Usage is pretty straightforward:
 * update config file (~/.xapi-back.cfg or /etc/xapi-back.cfg)  with details about hosts connections (sorry but passwords are in 
 cleartext for now - so for security reason it's better have config file in your home directory with 0600 access) and root of your 
 backup directory
-* xb list -  test that you connect to hosts and see VMs list
+* xb hosts -  test that you connect to hosts and
+* xb list  - see all VMs available on your host(s)
 * go to [xapi-back homepage](http://zderadicka.eu/projects/python/xapi-back-simple-xen-backup-tool/) for more details  
 
 LICENSE
