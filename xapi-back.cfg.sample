@@ -10,5 +10,15 @@
 "storage_retain":5,
 "compress":"client",
 "compress_level":1,
-"log_file":""
+"log_file":"",
+"mail_log": {
+"host" : "",
+"port" : 25,
+"from" : "",
+"to" : ["",""],
+"user": "",
+"password": "",
+"secure": false,
+"subject": ""
+}
 }

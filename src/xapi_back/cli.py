@@ -19,6 +19,7 @@ import threading
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 import logging.handlers
+from xapi_back.logmail import BufferingSMTPHandler
 
 
 
@@ -255,14 +256,27 @@ def prepare_env(sys_args):
     else:
         log.addHandler(logging.NullHandler())
     
+    mail_log_handler = None   
+    if cfg.has_key('mail_log') and cfg['mail_log'].get('host'):
+        mc=cfg['mail_log']
+        mail_log_handler=BufferingSMTPHandler(mailhost=mc['host'], 
+                           mailport= mc.get('port'), 
+                           fromaddr= mc['from'], 
+                           toaddr=mc['to'], 
+                           subject=mc.get('subject', 'xapi-back log'),
+                           secure=mc.get('secure', False),
+                           user=mc.get('user'),
+                           password=mc.get('password'))
+        log.addHandler(mail_log_handler)
+    
     cmd_class=cmd_classes.get(args.cmd)
     if not cmd_class:
         print >> sys.stderr, 'Internal error - unknown command : %s' % args.cmd
         sys.exit(2)
-    return cmd_class(cfg,args)
+    return cmd_class(cfg,args), mail_log_handler
     
 def main(sys_args):
-    cmd = prepare_env(sys_args)
+    cmd, mail_log_handler = prepare_env(sys_args)
     try:
         log.debug('Executing command %s', cmd.name)
         cmd.execute()
@@ -271,6 +285,14 @@ def main(sys_args):
         log.error('Command %s failed with %s', cmd.name, e)
         traceback.print_exc()
         sys.exit(3)
+    finally:
+        try:
+            if mail_log_handler:
+                mail_log_handler.flush()
+        except Exception,e:
+            print >>sys.stderr, 'Cannot email log: %s'%e
+            traceback.print_exc()
+            
     
 if __name__ == '__main__':
     main(sys.argv[1:])
