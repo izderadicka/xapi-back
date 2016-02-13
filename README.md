@@ -39,4 +39,8 @@ v.0.2 - Added possibility to set compression level (basically default compressio
 				just few % space - it does not make sense to use it)
 v.0.3 - Added ssl option to not check server certificates
 v.0.3.1 - HTTP Redirect for VM export - this should enable to backup VMs from pool
-v/0.3.2 - fixed restore to particular SR uuid
+v.0.3.2 - fixed restore to particular SR uuid
+v.0.3.3 - backup in pool (HTTP redirect of export), fixed restore to particular SR
+v.0.3.4 - option to restore snapshot as VM
+v.0.3.5 - config file could be in home directory ( default)  
+v.0.3.8 - possibility to send log via email 
