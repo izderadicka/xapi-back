@@ -5,8 +5,9 @@ WARNINGS
 
 1. Provided as is,  don't blame for problems. I tried to make it working reliably, 
 but if you loose backup sorry.   I use it myself for backup of VMs,  but cannot capture all scenarios.
-2. I assuming that all VMs will have **different names**. If not identical names will be messed 
-together!
+2. v0.4.0 is NOT compatible with previous versions storage -  it enables backup VMs to have same name - this
+means that directory name is now - vm_name#vm_uuid -   some previous backups will not be visible to the 
+tool (directories should be manually merged or renamed)
 
 USAGE
 -----

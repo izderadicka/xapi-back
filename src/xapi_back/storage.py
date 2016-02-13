@@ -13,11 +13,11 @@ BASE_SLOT_EXT='.xva'
 SLOT_EXT=BASE_SLOT_EXT+'.gz'
 UNFINISHEND_EXT='.new'
 SIZE_EXT='.size'
-
+UUID_SEP='#'
 
 class Rack(object):
-    def __init__(self, vm_name, root, max_slots, compression_level, compression_method='client'):
-        self._path= os.path.join(root,vm_name)
+    def __init__(self, vm_name, vm_uuid, root, max_slots, compression_level, compression_method='client'):
+        self._path= os.path.join(root, Rack.get_full_name(vm_name, vm_uuid))
         if not os.path.exists(self._path):
             os.mkdir(self._path)
         self._max_slots=max_slots
@@ -26,8 +26,12 @@ class Rack(object):
         self.clear()
         
     @staticmethod
-    def exists(vm_name, root):
-        return os.path.exists(os.path.join(root,vm_name))
+    def get_full_name(vm_name, vm_uuid):   
+        return  '%s%s%s'%(vm_name, UUID_SEP, vm_uuid)
+    
+    @staticmethod
+    def exists(vm_name, vm_uuid, root):
+        return os.path.exists(os.path.join(root,Rack.get_full_name(vm_name, vm_uuid)))
     
     def clear(self):
         """ Delete all unfinished backups"""
@@ -91,16 +95,21 @@ class Storage(object):
         self._comp_level = compression_level
         self._comp_method = compression_method
         
-    def get_rack_for(self, vm_name, exists=False):
-        if exists and not Rack.exists(vm_name, self._root):
+    def get_rack_for(self, vm_name, vm_uuid, exists=False):
+        if exists and not Rack.exists(vm_name, vm_uuid, self._root):
             return None
-        return Rack(vm_name, self._root, self._max_slots, self._comp_level, compression_method=self._comp_method)
+        return Rack(vm_name, vm_uuid, self._root, self._max_slots, self._comp_level, compression_method=self._comp_method)
     
     def get_status(self):
         res={}
         for r in os.listdir(self._root):
             if os.path.isdir(os.path.join(self._root,r)):
-                rack=self.get_rack_for(r)
+                segs=r.split(UUID_SEP)
+                vm_uuid=segs[-1]
+                vm_name=UUID_SEP.join(segs[:-1])
+                rack=self.get_rack_for(vm_name, vm_uuid, exists=True)
+                if not rack:
+                    continue
                 s=rack.last_slot
                 last_backup=None
                 if s:
@@ -109,7 +118,7 @@ class Storage(object):
                 else:
                     last_backup=None
                     duration=None
-                res[r]={'last_backup':last_backup, 'duration':duration}
+                res[vm_uuid]={'name':vm_name, 'last_backup':last_backup, 'duration':duration}
                 
         return res
             

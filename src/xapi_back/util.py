@@ -53,6 +53,9 @@ def format_size(x):
         
     return '%0.1f%s'%(x,s) if s else '%0.0f' % x
 
+def shorten_uuid(u):
+    return '%s...'%u[:5]
+
 class AlreadyLocked(Exception):
     def __init__(self, msg):
         super(AlreadyLocked, self).__init__(msg)

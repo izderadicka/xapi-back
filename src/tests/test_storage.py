@@ -9,17 +9,14 @@ import os
 from xapi_back.storage import Storage
 import shutil
 import time
+import uuid
 
 TEST_FILE= '/usr/bin/python'
 
-class Test(unittest.TestCase):
+def gen_uuid():
+    return str(uuid.uuid4())
 
-
-    def setUp(self):
-        self.dir=tempfile.mkdtemp()
-        
-    def test_compress(self):
-        def write_test_file( s):
+def write_test_file( s):
             w = s.get_writer()
             with open(TEST_FILE,'rb') as f:
                 while True:
@@ -27,10 +24,36 @@ class Test(unittest.TestCase):
                     if not read:
                         break
                     w.write(read)
-            slot.close()
+            s.close()
+
+class Test(unittest.TestCase):
+
+
+    def setUp(self):
+        self.dir=tempfile.mkdtemp()
+    
+    def test_uuid(self):
+        sr=Storage(self.dir, 2,compression_level= 0)
+        uid=gen_uuid()
+        rack=sr.get_rack_for('test',uid )
+        slot=rack.create_slot()
+        write_test_file(slot)
+        slot.close()
+        uid=gen_uuid()
+        rack=sr.get_rack_for('test',uid )
+        self.assertEqual(rack.last_slot, None)
+        self.assertTrue(os.path.exists(rack._path))
+        uid=gen_uuid()
+        rack=sr.get_rack_for('test',uid,exists=True)
+        self.assertFalse(rack)
+        
+        
+        
+    def test_compress(self):
         test_file_size=os.stat(TEST_FILE).st_size
         sr=Storage(self.dir, 2,compression_level= 0)
-        rack=sr.get_rack_for('test')
+        uid=gen_uuid()
+        rack=sr.get_rack_for('test',uid )
         slot=rack.create_slot()
         write_test_file(slot)
         res= rack.last_slot
@@ -39,7 +62,7 @@ class Test(unittest.TestCase):
         self.assertTrue(test_file_size < res.size)
         
         sr=Storage(self.dir, 2,compression_level= 1)
-        rack=sr.get_rack_for('test')
+        rack=sr.get_rack_for('test', uid)
         slot=rack.create_slot()
         write_test_file(slot)
         res= rack.last_slot
@@ -48,7 +71,7 @@ class Test(unittest.TestCase):
         comp_size = res.size
         
         sr=Storage(self.dir, 2,compression_level= 9)
-        rack=sr.get_rack_for('test')
+        rack=sr.get_rack_for('test', uid)
         slot=rack.create_slot()
         write_test_file(slot)
         res= rack.last_slot
@@ -56,18 +79,10 @@ class Test(unittest.TestCase):
         self.assertTrue(comp_size > res.size)
         
     def test_no_compress(self):
-        def write_test_file( s):
-            w = s.get_writer()
-            with open(TEST_FILE,'rb') as f:
-                while True:
-                    read= f.read(10000)
-                    if not read:
-                        break
-                    w.write(read)
-            slot.close()
         test_file_size=os.stat(TEST_FILE).st_size
         sr=Storage(self.dir, 2,compression_method= None)
-        rack=sr.get_rack_for('test')
+        uid=gen_uuid()
+        rack=sr.get_rack_for('test', uid)
         slot=rack.create_slot()
         write_test_file(slot)
         res= rack.last_slot
@@ -83,22 +98,13 @@ class Test(unittest.TestCase):
         print 'created', res.created
         
         st=sr.get_status()
-        self.assertTrue(st['test'])
+        self.assertTrue(st[uid])
         
     def test_no_compress_server(self):
-        def write_test_file( s):
-            w = s.get_writer()
-            with open(TEST_FILE,'rb') as f:
-                while True:
-                    read= f.read(10000)
-                    if not read:
-                        break
-                    w.write(read)
-            slot.close()
-        
         test_file_size=os.stat(TEST_FILE).st_size                
         sr=Storage(self.dir, 2,compression_method= 'server')
-        rack=sr.get_rack_for('test')
+        uid=gen_uuid()
+        rack=sr.get_rack_for('test',uid)
         slot=rack.create_slot()
         write_test_file(slot)
         res= rack.last_slot
@@ -111,7 +117,8 @@ class Test(unittest.TestCase):
         
     def test_basic(self):
         sr=Storage(self.dir, 2)
-        rack=sr.get_rack_for('test')
+        uid=gen_uuid()
+        rack=sr.get_rack_for('test', uid)
         slot=rack.create_slot()
         msg='Hi There Is Anybody In There'
         slot.get_writer().write(msg)

@@ -28,7 +28,7 @@ class BackupBatchCommand(CommandForEachHost, BackupOne):
         with RuntimeLock(BACKUP_LOCK, 'Another backup is running!'):
             for vm_id in all_vms:
                 vm = all_vms[vm_id]
-                if not vm['is_control_domain'] and  \
+                if not vm['is_a_template'] and not vm['is_control_domain'] and not vm['is_a_snapshot'] and  \
                 vm['other_config'].get(AUTOBACKUP_KEY) and \
                 (not batch or batch == vm['other_config'].get(AUTOBACKUP_BATCH)):
                     vm_name=vm['name_label']
