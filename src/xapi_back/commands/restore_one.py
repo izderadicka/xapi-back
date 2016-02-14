@@ -29,21 +29,21 @@ class RestoreOneCommand(CommandForOneHost):
                 raise CommandError('Invalid SR uuid: %s'%f.details[0])
         storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3),
                         compression_method=self.config.get('compress', 'client'))
-        rack=storage.get_rack_for(vm_name, exists=True)
-        if not rack:
-            raise CommandError('No backup to restore for VM %s' % vm_name)
+        try:
+            rack=storage.find_rack_for(vm_name,self.args.uuid)
+        except Storage.NotFound, e:
+            raise CommandError(str(e))
         slot=rack.last_slot
         if not slot:
             raise CommandError('No backup to restore for VM %s' % vm_name)
         
         sid=session._session
-        progress=None
-        task_id=None
-        if show_progress:
-                    task_id=session.xenapi.task.create('VM.import', 'Import of %s'%vm_name)
-                    log.debug("Starting progress monitor")
-                    progress=ProgressMonitor(session, task_id)
-                    progress.start()
+        
+        task_id=session.xenapi.task.create('VM.import', 'Import of %s'%vm_name)
+        log.debug("Starting progress monitor")
+        progress=ProgressMonitor(session, task_id, print_progress=show_progress)
+        progress.start()
+        
         with Client(host['url']) as c:
             log.info('Starting import of VM %s'% vm_name)
             params= {'session_id':sid,  'task_id':task_id}
@@ -55,8 +55,9 @@ class RestoreOneCommand(CommandForOneHost):
             _resp=c.put('/import', slot.get_reader(), slot.size_uncompressed, params)
             
             log.info('Finished import of VM %s', vm_name,)
+            
         if progress:
-            progress.join(30)
+            progress.join(300)
             if progress.is_alive():
                 log.warn('Task did not finished')
             else:
@@ -89,10 +90,15 @@ class RestoreOneCommand(CommandForOneHost):
                                 else:
                                     log.warn('VM is not a template')
                             except XenAPI.Failure,f:
-                                log.error('Cannot change template to VM')
-                                    
+                                log.error('Cannot change template to VM: %s',f)
+                        if self.args.rename:
+                            try:
+                                session.xenapi.VM.set_name_label(vm_id, self.args.rename) 
+                            except XenAPI.Failure,f:
+                                log.error('Cannot rename VM: %s',f)  
+                                     
                     else:
-                        log.warn('Import result does not contain VM id')
+                        log.error('Import result does not contain VM id')
             progress.stop()
             
             
@@ -103,10 +109,12 @@ class RestoreOneCommand(CommandForOneHost):
     def add_params(self, parser):
         super(RestoreOneCommand, self).add_params(parser)
         parser.add_argument('--vm', required=True, help="Name of VM")
+        parser.add_argument('--uuid', help="UUID of VM (can be just few starting chars) - use to distinguish VMs with same name")
         parser.add_argument('--no-progress', action='store_true', help="Do not print progress")
-        parser.add_argument('--restore', action='store_true', help="Restore as replacement of original VM (MAC is same)")
+        parser.add_argument('--restore', action='store_true', help="Restore as replacement of original VM (MAC is the same)")
         parser.add_argument('--sr_id', help="uuid of SR to import to (if other then default SR)")
         parser.add_argument('--as-vm', action='store_true', help='In case of snapshot (backup of running VM) restores as VM with same name (not as a template)')
+        parser.add_argument('--rename', help='Rename restored VM to this new name')
         
 def register_me(commands):
     register(commands, RestoreOneCommand)

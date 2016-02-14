@@ -20,6 +20,7 @@ class BackupOne(object):
     def backup(self, session, vm_id, vm_name, host, storage, force_shutdown=False, show_progress=False,
                compress_on_server=False):
         uuid=session.xenapi.VM.get_uuid(vm_id)  # @ReservedAssignment
+        vm_uuid=uuid
         state = session.xenapi.VM.get_power_state(vm_id)
         restore_actions=[]
         try:
@@ -40,7 +41,7 @@ class BackupOne(object):
                             raise
                     uuid=session.xenapi.VM.get_uuid(tt_id)
                     restore_actions.append(lambda: uninstall_VM(session, tt_id))
-                    log.debug('Made snapshot of %s to uuid: %s', vm_name, uuid)
+                    log.debug('Made snapshot of %s(%s) to snapshot uuid: %s', vm_name, vm_uuid, uuid)
                 else:
                     log.debug('Shutting down VM')
                     session.xenapi.VM.clean_shutdown(vm_id)
@@ -50,8 +51,8 @@ class BackupOne(object):
                     restore_actions.append(restart_vm)
         
             sid=session._session
-            rack=storage.get_rack_for(vm_name)
-            log.info('Starting backup for VM %s (uuid=%s) on server %s', vm_name, uuid, host['name'])
+            rack=storage.get_rack_for(vm_name, vm_uuid)
+            log.info('Starting backup for VM %s (uuid=%s) on server %s', vm_name, vm_uuid, host['name'])
             progress=None
             with Client(host['url']) as c:
                 params={'session_id':sid, 'uuid': uuid}
@@ -106,8 +107,17 @@ class BackupOneCommand(CommandForOneHost, BackupOne):
         log.debug('Found this VMs %s', ids)
         if not ids:
             raise CommandError('VM %s not found on server %s' % (vm_name, host['name']))
-        elif len(ids)>1:
-            raise CommandError('Name %s is not unique, please fix'% vm_name)
+        else:
+            def filter_by_uuid(vm_id):
+                if self.args.uuid:
+                    vm_uuid=session.xenapi.VM.get_uuid(vm_id)
+                    return vm_uuid.startswith(self.args.uuid.lower())
+                return True
+            ids = filter(filter_by_uuid,ids)
+            if not ids:
+                raise CommandError('VM %s, uuid=%s not found on server %s' % (vm_name, self.args.uuid, host['name']))
+            elif len(ids)>1:
+                raise CommandError('Name %s, uuid=%s is not unique, please fix'% vm_name, self.args.uuid )
         
         vm_id=ids[0]
         storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3),
@@ -122,6 +132,7 @@ class BackupOneCommand(CommandForOneHost, BackupOne):
     def add_params(self, parser):
         super(BackupOneCommand, self).add_params(parser)
         parser.add_argument('--vm', required=True, help="Name of VM")
+        parser.add_argument('--uuid', help="UUID of VM (can be just few starting chars) - use to distinguish VMs with same name")
         parser.add_argument('--no-progress', action='store_true', help="Do not print progress")
         parser.add_argument('--shutdown', action='store_true', help="Shutdown running VM before backup and start afterward")
         

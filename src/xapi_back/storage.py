@@ -30,6 +30,13 @@ class Rack(object):
         return  '%s%s%s'%(vm_name, UUID_SEP, vm_uuid)
     
     @staticmethod
+    def split_name(name):
+        segs=name.split(UUID_SEP)
+        vm_uuid=segs[-1]
+        vm_name=UUID_SEP.join(segs[:-1])
+        return vm_name, vm_uuid
+    
+    @staticmethod
     def exists(vm_name, vm_uuid, root):
         return os.path.exists(os.path.join(root,Rack.get_full_name(vm_name, vm_uuid)))
     
@@ -100,13 +107,31 @@ class Storage(object):
             return None
         return Rack(vm_name, vm_uuid, self._root, self._max_slots, self._comp_level, compression_method=self._comp_method)
     
+    class NotFound(Exception):
+        pass
+    def find_rack_for(self, vm_name, vm_uuid=None):
+        racks=[]
+        for r in os.listdir(self._root):
+            if os.path.isdir(os.path.join(self._root,r)):
+                vm_name2, vm_uuid2=Rack.split_name(r)
+                if vm_name == vm_name2 and ( not vm_uuid or vm_uuid2.startswith(vm_uuid.lower())):
+                    racks.append((vm_name2, vm_uuid2))
+        if len(racks)>1:
+            raise Storage.NotFound('VM Storage Rack name %s, uuid %s is not unique, specify more precisely '% (vm_name, vm_uuid))
+        elif not racks:
+            raise Storage.NotFound('VM Storage Rack name %s, uuid %s does not exist' % (vm_name, vm_uuid))
+        else:
+            #TODO: handle race conditions
+            return Rack(vm_name2, vm_uuid2, self._root, self._max_slots, self._comp_level, compression_method=self._comp_method)
+            
+                
+        
+    
     def get_status(self):
         res={}
         for r in os.listdir(self._root):
             if os.path.isdir(os.path.join(self._root,r)):
-                segs=r.split(UUID_SEP)
-                vm_uuid=segs[-1]
-                vm_name=UUID_SEP.join(segs[:-1])
+                vm_name, vm_uuid=Rack.split_name(r)
                 rack=self.get_rack_for(vm_name, vm_uuid, exists=True)
                 if not rack:
                     continue

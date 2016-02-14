@@ -23,7 +23,7 @@ def write_file(dir_name,f, compression_level=0, block_size=10000):
             w.write(read)
         slot.close()
     sr=Storage(dir_name, 2,compression_level= compression_level)
-    rack=sr.get_rack_for(TEST_RACK)
+    rack=sr.get_rack_for(TEST_RACK, '1234')
     slot=rack.create_slot()
     w(slot)
     

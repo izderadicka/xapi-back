@@ -39,13 +39,35 @@ class Test(unittest.TestCase):
         slot=rack.create_slot()
         write_test_file(slot)
         slot.close()
-        uid=gen_uuid()
-        rack=sr.get_rack_for('test',uid )
+        uid2=gen_uuid()
+        rack=sr.get_rack_for('test',uid2 )
         self.assertEqual(rack.last_slot, None)
         self.assertTrue(os.path.exists(rack._path))
-        uid=gen_uuid()
-        rack=sr.get_rack_for('test',uid,exists=True)
+        uid3=gen_uuid()
+        rack=sr.get_rack_for('test',uid3,exists=True)
         self.assertFalse(rack)
+        
+        try:
+            r=sr.find_rack_for('test')
+            self.fail('Should raise exception')
+        except Storage.NotFound:
+            pass
+        
+        try:
+            r=sr.find_rack_for('test', '123')
+            self.fail('Should raise exception')
+        except Storage.NotFound:
+            pass
+        
+        r=sr.find_rack_for('test', uid)
+        self.assertTrue(r)
+        s=r.last_slot
+        self.assertTrue(s)
+        
+        r=sr.find_rack_for('test', uid[:5].upper())
+        self.assertTrue(r)
+        s=r.last_slot
+        self.assertTrue(s)
         
         
         

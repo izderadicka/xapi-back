@@ -133,7 +133,8 @@ class CommandForOneHost(Command):
 
 
 class ProgressMonitor(threading.Thread):  
-    def __init__(self, session, task_id, message="Progress {progress:0.2f}%\r", wait_period=1):  
+    def __init__(self, session, task_id, message="Progress {progress:0.2f}%\r", wait_period=1, 
+                 print_progress=True):  
         super(ProgressMonitor, self).__init__(name="Progress monitor")
         self._evt=threading.Event()
         self._running=True
@@ -144,13 +145,15 @@ class ProgressMonitor(threading.Thread):
         self.daemon=True
         self.result=None
         self.error=False
+        self._print_progress=print_progress
         
     def run(self):
         while self._running:
             try:
-                progress=self._ses.xenapi.task.get_progress(self._task_id) * 100.0
-                sys.stdout.write(self._msg.format(progress=progress))
-                sys.stdout.flush()
+                if self._print_progress:
+                    progress=self._ses.xenapi.task.get_progress(self._task_id) * 100.0
+                    sys.stdout.write(self._msg.format(progress=progress))
+                    sys.stdout.flush()
                 status=self._ses.xenapi.task.get_status(self._task_id)
                 if status != 'pending' and status !='cancelling':
                     if status=='failure':
