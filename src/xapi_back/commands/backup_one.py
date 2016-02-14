@@ -117,7 +117,7 @@ class BackupOneCommand(CommandForOneHost, BackupOne):
             if not ids:
                 raise CommandError('VM %s, uuid=%s not found on server %s' % (vm_name, self.args.uuid, host['name']))
             elif len(ids)>1:
-                raise CommandError('Name %s, uuid=%s is not unique, please fix'% vm_name, self.args.uuid )
+                raise CommandError('Name %s, uuid=%s is not unique, please fix'% (vm_name, self.args.uuid) )
         
         vm_id=ids[0]
         storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3),
