@@ -41,6 +41,8 @@ class CustInstall(install):
             
             except (OSError, IOError):
                 pass
+        else:
+            print('IMPORTANT: If upgrading from version <0.4.0 note that structure of storage directory is incompatible!!!\n View README for details.')
     
 
 setup(name='xapi-back',
