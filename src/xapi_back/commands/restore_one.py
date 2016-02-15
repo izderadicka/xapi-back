@@ -94,6 +94,7 @@ class RestoreOneCommand(CommandForOneHost):
                         if self.args.rename:
                             try:
                                 session.xenapi.VM.set_name_label(vm_id, self.args.rename) 
+                                log.info('VM Renamed to %s', self.args.rename)
                             except XenAPI.Failure,f:
                                 log.error('Cannot rename VM: %s',f)  
                                      
