@@ -69,6 +69,11 @@ class Test(unittest.TestCase):
         s=r.last_slot
         self.assertTrue(s)
         
+        r=sr.find_rack_for('test', uid2)
+        self.assertTrue(r)
+        s=r.last_slot
+        self.assertFalse(s)
+        
         
         
     def test_compress(self):

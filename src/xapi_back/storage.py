@@ -122,7 +122,7 @@ class Storage(object):
             raise Storage.NotFound('VM Storage Rack name %s, uuid %s does not exist' % (vm_name, vm_uuid))
         else:
             #TODO: handle race conditions
-            return Rack(vm_name2, vm_uuid2, self._root, self._max_slots, self._comp_level, compression_method=self._comp_method)
+            return Rack(racks[0][0], racks[0][1], self._root, self._max_slots, self._comp_level, compression_method=self._comp_method)
             
                 
         
