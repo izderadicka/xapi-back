@@ -12,8 +12,6 @@ AUTOBACKUP_KEY='autobackup'
 AUTOBACKUP_BATCH="autobackup_set"
 BACKUP_LOCK='xapi_backup.lock'
 
-
-
 def uninstall_VM(session, vm_id):
     vbds= session.xenapi.VM.get_VBDs(vm_id)
     vdis=[session.xenapi.VBD.get_VDI(ref) for ref in vbds \

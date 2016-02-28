@@ -4,8 +4,7 @@ Created on Sep 23, 2014
 @author: ivan
 '''
 
-from xapi_back.cli import CommandForOneHost, register, CommandError, log,\
-    ProgressMonitor
+from xapi_back.cli import CommandForOneVM, register, log, ProgressMonitor, CommandError
 from xapi_back.http import Client
 from xapi_back.storage import Storage
 from xapi_back import XenAPI
@@ -13,7 +12,7 @@ from backup_one import SNAPSHOT_PREFIX
 import re
 import sys
 
-class RestoreOneCommand(CommandForOneHost):
+class RestoreOneCommand(CommandForOneVM):
     name="restore"
     description="Restores backup to given host"
     
@@ -109,8 +108,6 @@ class RestoreOneCommand(CommandForOneHost):
     @classmethod
     def add_params(self, parser):
         super(RestoreOneCommand, self).add_params(parser)
-        parser.add_argument('--vm', required=True, help="Name of VM")
-        parser.add_argument('--uuid', help="UUID of VM (can be just few starting chars) - use to distinguish VMs with same name")
         parser.add_argument('--no-progress', action='store_true', help="Do not print progress")
         parser.add_argument('--restore', action='store_true', help="Restore as replacement of original VM (MAC is the same)")
         parser.add_argument('--sr_id', help="uuid of SR to import to (if other then default SR)")

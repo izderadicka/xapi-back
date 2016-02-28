@@ -48,3 +48,5 @@ v.0.3.8 - possibility to send log via email
 v.0.4.1 - VMs can have same name
 				- backup repository is not compatible with previous versions !
 				- rename after restore
+v.0.4.2 - enable and disable have --uuid argument to identify uniquely VM
+				- small refactoring

@@ -22,7 +22,7 @@ class Test(unittest.TestCase):
         self.assertTrue(cfg['servers'][0]['name'])
         
     def test_cli(self):
-        cmd=prepare_env(['-c', CFG, 'hosts'])
+        cmd, _log=prepare_env(['-c', CFG, 'hosts'])
         self.assertEqual('hosts', cmd.name)
         
         

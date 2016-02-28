@@ -4,8 +4,7 @@ Created on Sep 23, 2014
 @author: ivan
 '''
 
-from xapi_back.cli import CommandForOneHost, register, CommandError, log
-from xapi_back import XenAPI
+from xapi_back.cli import CommandForOneHost, register
 from tabulate import tabulate
 from xapi_back.util import format_size
 

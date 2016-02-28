@@ -4,8 +4,7 @@ Created on Sep 21, 2014
 @author: ivan
 '''
 
-from xapi_back.cli import CommandForOneHost, register, CommandError, log,\
-    ProgressMonitor
+from xapi_back.cli import CommandForOneVM, register, log, CommandError, ProgressMonitor
 from xapi_back.http import Client
 from xapi_back.storage import Storage
 from xapi_back.common import uninstall_VM, cancel_task, BACKUP_LOCK
@@ -95,7 +94,7 @@ class BackupOne(object):
         
 
 
-class BackupOneCommand(CommandForOneHost, BackupOne):
+class BackupOneCommand(CommandForOneVM, BackupOne):
     name="backup"
     description="Backups one VM"
     def execute_for_one(self, session, host):
@@ -103,23 +102,7 @@ class BackupOneCommand(CommandForOneHost, BackupOne):
         show_progress=not self.args.no_progress
         force_shutdown=self.args.shutdown
         
-        ids=session.xenapi.VM.get_by_name_label(vm_name)
-        log.debug('Found this VMs %s', ids)
-        if not ids:
-            raise CommandError('VM %s not found on server %s' % (vm_name, host['name']))
-        else:
-            def filter_by_uuid(vm_id):
-                if self.args.uuid:
-                    vm_uuid=session.xenapi.VM.get_uuid(vm_id)
-                    return vm_uuid.startswith(self.args.uuid.lower())
-                return True
-            ids = filter(filter_by_uuid,ids)
-            if not ids:
-                raise CommandError('VM %s, uuid=%s not found on server %s' % (vm_name, self.args.uuid, host['name']))
-            elif len(ids)>1:
-                raise CommandError('Name %s, uuid=%s is not unique, please fix'% (vm_name, self.args.uuid) )
-        
-        vm_id=ids[0]
+        vm_id=self.find_vm(session, host)
         storage=Storage(self.config['storage_root'], self.config.get('storage_retain', 3),
                         self.config.get('compress_level', 1), self.config.get('compress', 'client'))
         with RuntimeLock(BACKUP_LOCK,'Another backup is running!'):
@@ -131,8 +114,6 @@ class BackupOneCommand(CommandForOneHost, BackupOne):
     @classmethod
     def add_params(self, parser):
         super(BackupOneCommand, self).add_params(parser)
-        parser.add_argument('--vm', required=True, help="Name of VM")
-        parser.add_argument('--uuid', help="UUID of VM (can be just few starting chars) - use to distinguish VMs with same name")
         parser.add_argument('--no-progress', action='store_true', help="Do not print progress")
         parser.add_argument('--shutdown', action='store_true', help="Shutdown running VM before backup and start afterward")
         

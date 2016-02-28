@@ -22,14 +22,9 @@ import logging.handlers
 from xapi_back.logmail import BufferingSMTPHandler
 
 
-
 class ConfigError(Exception):
     def __init__(self, msg="Configuration Error"):
         super(ConfigError, self).__init__(msg)
-
-class CommandError(Exception):
-    def __init__(self, msg="Command Error"):
-        super(CommandError, self).__init__(msg)      
 
 DEFAULT_CONFIG_FILES=[os.path.expanduser('~/.xapi-back.cfg'), '/etc/xapi-back.cfg']
 def read_config(config_file):
@@ -50,7 +45,11 @@ def read_config(config_file):
         raise ConfigError('Invalid format of configuration file: %s' % e)
     except IOError, e:
         raise ConfigError('Cannot read configuration file: %s' % e)
-    
+
+class CommandError(Exception):
+    def __init__(self, msg="Command Error"):
+        super(CommandError, self).__init__(msg)     
+            
 class Command(object):  
     name = ""  
     description = ""
@@ -131,6 +130,37 @@ class CommandForOneHost(Command):
         super(CommandForOneHost, self).add_params(parser)
         parser.add_argument('--host', required=True, help='name of host to connect to (from config file)')
 
+class CommandForOneVM(CommandForOneHost):
+    
+    def find_vm(self, session, host):
+        vm_name = self.args.vm
+        if self.args.uuid:
+            vm_uuid=self.args.uuid.lower()
+        else:
+            vm_uuid=None
+        ids=session.xenapi.VM.get_by_name_label(vm_name)
+        log.debug('Found this VMs %s', ids)
+        if not ids:
+            raise CommandError('VM %s not found on server %s' % (vm_name, host['name']))
+        else:
+            def filter_by_uuid(vm_id):
+                if vm_uuid:
+                    vm_uuid2=session.xenapi.VM.get_uuid(vm_id)
+                    return vm_uuid2.startswith(vm_uuid)
+                return True
+            ids = filter(filter_by_uuid,ids)
+            if not ids:
+                raise CommandError('VM %s, uuid=%s not found on server %s' % (vm_name, vm_uuid, host['name']))
+            elif len(ids)>1:
+                raise CommandError('Name %s, uuid=%s is not unique, please fix'% (vm_name, vm_uuid) )
+            
+        return ids[0]
+    
+    @classmethod
+    def add_params(self, parser):
+        super(CommandForOneVM, self).add_params(parser)
+        parser.add_argument('--vm', required=True, help="Name of VM")
+        parser.add_argument('--uuid', help="UUID of VM (can be just few starting chars) - use to distinguish VMs with same name")
 
 class ProgressMonitor(threading.Thread):  
     def __init__(self, session, task_id, message="Progress {progress:0.2f}%\r", wait_period=1, 
