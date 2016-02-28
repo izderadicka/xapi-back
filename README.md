@@ -5,7 +5,7 @@ WARNINGS
 
 1. Provided as is,  don't blame for problems. I tried to make it working reliably, 
 but if you loose backup sorry.   I use it myself for backup of VMs,  but cannot capture all scenarios.
-2. v0.4.0 is NOT compatible with previous versions storage -  it enables backup VMs to have same name - this
+2. v0.4.0 is NOT compatible with previous versions storage -  it enables backup VMs with same name - this
 means that directory name is now - vm_name#vm_uuid -   some previous backups will not be visible to the 
 tool (directories should be manually merged or renamed)
 
@@ -45,3 +45,6 @@ v.0.3.3 - backup in pool (HTTP redirect of export), fixed restore to particular 
 v.0.3.4 - option to restore snapshot as VM
 v.0.3.5 - config file could be in home directory ( default)  
 v.0.3.8 - possibility to send log via email 
+v.0.4.1 - VMs can have same name
+				- backup repository is not compatible with previous versions !
+				- rename after restore
