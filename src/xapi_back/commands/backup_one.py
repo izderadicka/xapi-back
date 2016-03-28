@@ -8,7 +8,7 @@ from xapi_back.cli import CommandForOneVM, register, log, CommandError, Progress
 from xapi_back.http import Client
 from xapi_back.storage import Storage
 from xapi_back.common import uninstall_VM, cancel_task, BACKUP_LOCK
-from xapi_back.util import RuntimeLock
+from xapi_back.util import RuntimeLock, unsecure
 from xapi_back import XenAPI
 import traceback
 import sys
@@ -17,7 +17,7 @@ SNAPSHOT_PREFIX='Temp.backup of '
 class BackupOne(object):
     
     def backup(self, session, vm_id, vm_name, host, storage, force_shutdown=False, show_progress=False,
-               compress_on_server=False):
+               compress_on_server=False, insecure=False):
         uuid=session.xenapi.VM.get_uuid(vm_id)  # @ReservedAssignment
         vm_uuid=uuid
         state = session.xenapi.VM.get_power_state(vm_id)
@@ -53,7 +53,7 @@ class BackupOne(object):
             rack=storage.get_rack_for(vm_name, vm_uuid)
             log.info('Starting backup for VM %s (uuid=%s) on server %s', vm_name, vm_uuid, host['name'])
             progress=None
-            with Client(host['url']) as c:
+            with Client(unsecure(host['url'],insecure)) as c:
                 params={'session_id':sid, 'uuid': uuid}
                 if compress_on_server:
                     params['use_compression']="true"
@@ -107,7 +107,7 @@ class BackupOneCommand(CommandForOneVM, BackupOne):
                         self.config.get('compress_level', 1), self.config.get('compress', 'client'))
         with RuntimeLock(BACKUP_LOCK,'Another backup is running!'):
             self.backup(session, vm_id, vm_name, host, storage, force_shutdown, show_progress,
-                        self.config.get('compress') == 'server')
+                        self.config.get('compress') == 'server', insecure=self.args.insecure)
         
         
     
@@ -116,6 +116,7 @@ class BackupOneCommand(CommandForOneVM, BackupOne):
         super(BackupOneCommand, self).add_params(parser)
         parser.add_argument('--no-progress', action='store_true', help="Do not print progress")
         parser.add_argument('--shutdown', action='store_true', help="Shutdown running VM before backup and start afterward")
+        parser.add_argument('--insecure', action='store_true', help="Enforces insecure (http) connection to server - can be bit faster")
         
 def register_me(commands):
     register(commands, BackupOneCommand)

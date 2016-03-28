@@ -36,7 +36,7 @@ class BackupBatchCommand(CommandForEachHost, BackupOne):
                         print "Host %s - VM %s" % (host['name'], vm_name)
                     try:
                         self.backup(session, vm_id, vm_name, host, storage, self.args.shutdown, 
-                                    show_progress=prog, compress_on_server=self.config.get('compress') == 'server')
+                                    show_progress=prog, compress_on_server=self.config.get('compress') == 'server', insecure=self.args.insecure)
                     except Exception, e:
                         log.error('Error while backing up VM %s on host %s', vm_name, host['name'])
                     
@@ -52,6 +52,7 @@ class BackupBatchCommand(CommandForEachHost, BackupOne):
         parser.add_argument('--batch', help="selects only backups that are indicated for this batch")
         parser.add_argument('--shutdown', action='store_true', help="Shutdown running VM before backup and start afterward")
         parser.add_argument('--no-progress', action='store_true', help="Do not print progress")
+        parser.add_argument('--insecure', action='store_true', help="Enforces insecure (http) connection to server - can be bit faster")
                 
 def register_me(commands):
     register(commands, BackupBatchCommand)                

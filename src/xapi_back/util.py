@@ -11,6 +11,7 @@ import struct
 import sys
 from os.path import os
 import errno
+import re
 
 
 def bool2str(b):
@@ -93,3 +94,10 @@ class RuntimeLock(object):
     
     def __exit__(self, ex_type, ex_value, frm):
         self.unlock()
+        
+def unsecure(url, unsecure=True):
+    m=re.match('^https:', url)
+    if m and unsecure:
+        return 'http:'+url[m.end():]
+    return url
+    

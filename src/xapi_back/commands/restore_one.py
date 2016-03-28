@@ -9,6 +9,7 @@ from xapi_back.http import Client
 from xapi_back.storage import Storage
 from xapi_back import XenAPI
 from backup_one import SNAPSHOT_PREFIX
+from xapi_back.util import unsecure
 import re
 import sys
 
@@ -43,7 +44,7 @@ class RestoreOneCommand(CommandForOneVM):
         progress=ProgressMonitor(session, task_id, print_progress=show_progress)
         progress.start()
         
-        with Client(host['url']) as c:
+        with Client(unsecure(host['url'], self.args.insecure)) as c:
             log.info('Starting import of VM %s'% vm_name)
             params= {'session_id':sid,  'task_id':task_id}
             if srid:
@@ -113,6 +114,7 @@ class RestoreOneCommand(CommandForOneVM):
         parser.add_argument('--sr_id', help="uuid of SR to import to (if other then default SR)")
         parser.add_argument('--as-vm', action='store_true', help='In case of snapshot (backup of running VM) restores as VM with same name (not as a template)')
         parser.add_argument('--rename', help='Rename restored VM to this new name')
+        parser.add_argument('--insecure', action='store_true', help="Enforces insecure (http) connection to server - can be bit faster")
         
 def register_me(commands):
     register(commands, RestoreOneCommand)
