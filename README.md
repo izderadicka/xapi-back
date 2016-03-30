@@ -34,6 +34,7 @@ pip install git+https://github.com/izderadicka/xapi-back.git#egg=xapi-back
 
 HISTORY
 -------
+```
 v.0.1 - Initial version
 v.0.2 - Added possibility to set compression level (basically default compression level in python
 				is 9 - highest compression, which is very slow -  it's ~ 6x slower that level 1 for  gain of 
@@ -50,3 +51,5 @@ v.0.4.1 - VMs can have same name
 				- rename after restore
 v.0.4.2 - enable and disable have --uuid argument to identify uniquely VM
 				- small refactoring
+v.0.4.3 - insecure option for backup/restore - uses http - theoretically can be bit faster - practically no speedup was observed
+```
