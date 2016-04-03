@@ -5,6 +5,7 @@ Created on Feb 5, 2016
 '''
 import logging
 import smtplib
+log = logging.getLogger('logmail')
 
 class BufferingSMTPHandler(logging.handlers.BufferingHandler):
     def __init__(self, mailhost, mailport, fromaddr, toaddr, user='', password='', subject='', secure=False):
@@ -35,7 +36,10 @@ class BufferingSMTPHandler(logging.handlers.BufferingHandler):
                 if self.user:
                     smtp.login(self.user, self.password)
                 smtp.sendmail(self.fromaddr, self.toaddr, header+msg)
+                log.debug('Succesfully sent mail to %s', self.toaddr)
                 smtp.quit()
-                self.buffer = []
+        except Exception:
+            log.exception('Failed to send email to %s', self.toaddr)
         finally:
+            self.buffer=[]
             self.release()

@@ -52,4 +52,5 @@ v.0.4.1 - VMs can have same name
 v.0.4.2 - enable and disable have --uuid argument to identify uniquely VM
 				- small refactoring
 v.0.4.3 - insecure option for backup/restore - uses http - theoretically can be bit faster - practically no speedup was observed
+V.0.4.4 - local logging of email send - debug success, log failures
 ```
