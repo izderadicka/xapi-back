@@ -35,8 +35,11 @@ class BufferingSMTPHandler(logging.handlers.BufferingHandler):
                     smtp = smtplib.SMTP(self.mailhost, self.mailport)
                 if self.user:
                     smtp.login(self.user, self.password)
-                smtp.sendmail(self.fromaddr, self.toaddr, header+msg)
-                log.debug('Succesfully sent mail to %s', self.toaddr)
+                res=smtp.sendmail(self.fromaddr, self.toaddr, header+msg)
+                log.debug('Succesfully sent mail')
+                if res:
+                    log.warn('Email was not sent to these recepients: %s', res)
+                
                 smtp.quit()
         except Exception:
             log.exception('Failed to send email to %s', self.toaddr)
