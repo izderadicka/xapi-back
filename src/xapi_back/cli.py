@@ -16,10 +16,14 @@ import xapi_back.commands
 from inspect import isclass
 import traceback
 import threading
+import socket
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 import logging.handlers
 from xapi_back.logmail import BufferingSMTPHandler
+
+
+socket.setdefaulttimeout(10)
 
 
 class ConfigError(Exception):
@@ -105,8 +109,11 @@ class CommandForEachHost(Command):
         self.before()
         for s in self.config['servers']:
             log.debug('Opening session to %s', s.get('name'))
-            with XAPISession(s['url'], s.get('user'), s.get('password')) as session:
-                self.execute_for_each(session, s)
+            try:
+                with XAPISession(s['url'], s.get('user'), s.get('password')) as session:
+                    self.execute_for_each(session, s)
+            except Exception as e:
+                log.exception('Error executing command for server %s', s['name'])
         self.after()
                 
 class CommandForOneHost(Command):
