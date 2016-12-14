@@ -113,6 +113,7 @@ class CommandForEachHost(Command):
                 with XAPISession(s['url'], s.get('user'), s.get('password')) as session:
                     self.execute_for_each(session, s)
             except Exception as e:
+                print >>sys.stderr, 'Error for command on server %s: %s' %(s['name'], e)
                 log.exception('Error executing command for server %s', s['name'])
         self.after()
                 
