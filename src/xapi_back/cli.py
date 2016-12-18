@@ -23,7 +23,7 @@ import logging.handlers
 from xapi_back.logmail import BufferingSMTPHandler
 
 
-socket.setdefaulttimeout(10)
+socket.setdefaulttimeout(300)
 
 
 class ConfigError(Exception):
